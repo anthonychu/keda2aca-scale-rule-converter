@@ -1,0 +1,130 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" data-name="vs/editor/editor.main"
+    href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/editor/editor.main.min.css">
+</head>
+
+<body>
+
+  <div id="kedaEditor" style="height: 100%; width: 48%; display: inline-block"></div>
+  <div id="acaEditor" style="height: 100%; width: 48%; display: inline-block"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
+    integrity="sha256-Rdw90D3AegZwWiwpibjH9wkBPwS9U4bjJ51ORH8H69c=" crossorigin="anonymous"></script>
+
+  <script>var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs' } }</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/loader.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/editor/editor.main.nls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/editor/editor.main.js"></script>
+
+
+  <script>
+    const baseOptions = {
+      language: 'yaml',
+      fontSize: 16,
+      minimap: {
+        enabled: false
+      },
+      readOnly: false
+    };
+
+    const kedaEditor = monaco.editor.create(document.getElementById('kedaEditor'), baseOptions);
+    const acaEditor = monaco.editor.create(document.getElementById('acaEditor'), Object.assign({
+      language: 'yaml',
+      readOnly: true
+    }, baseOptions));
+
+    kedaEditor.onDidChangeModelContent(() => {
+      
+      const kedaYaml = kedaEditor.getValue();
+      
+      try {
+        const json = jsyaml.loadAll(kedaYaml);
+
+        const acaSpec = {
+          "template": {
+            "scale": {
+            }
+          }
+        };
+
+        let scaledObject, scaledObjectTriggers;        
+        if (Array.isArray(json)) {
+          scaledObject = json.find(obj => obj.kind === 'ScaledObject');
+          if (!scaledObject) {
+            acaEditor.setValue('// No ScaledObject found');
+            return;
+          }
+          scaledObjectTriggers = scaledObject.spec.triggers;
+        } else {
+          if (json.kind === 'ScaledObject' && json.spec && Array.isArray(json.triggers)) {
+            scaledObjectTriggers = json.spec.triggers;
+          } else if (Array.isArray(json.triggers)) {
+            scaledObjectTriggers = json;
+          }
+          scaledObject = {
+            metadata: {
+              name: 'scale-rule-1'
+            },
+            spec: {
+              triggers: scaledObjectTriggers
+            }
+          };
+        }
+
+        if (!scaledObjectTriggers) {
+          acaEditor.setValue('// no KEDA triggers found');
+          return;
+        }
+
+        const rules = [];
+        for (const trigger of scaledObjectTriggers) {
+          if (trigger.authenticationRef && trigger.authenticationRef.name) {
+            const triggerAuthentication = json.find(obj => obj.kind === 'TriggerAuthentication' && obj.metadata.name === trigger.authenticationRef.name);
+            if (!triggerAuthentication) {
+              acaEditor.setValue('// no authentication found for trigger ' + trigger.type);
+              return;
+            }
+            trigger.authentication = triggerAuthentication;
+          }
+
+          const scaleRule = {
+            name: scaledObject.metadata.name,
+            custom: {
+              type: trigger.type,
+              metadata: trigger.metadata
+            }
+          };
+
+          if (trigger.authentication) {
+            const secretTargetRef = trigger.authentication.spec.secretTargetRef;
+            
+            if (secretTargetRef && secretTargetRef.length) {
+              scaleRule.custom.auth = secretTargetRef.map(ref => {
+                return {
+                  triggerParameter: ref.parameter,
+                  secretRef: ref.key
+                };
+              });
+            }
+          }
+
+          rules.push(scaleRule);
+        }
+
+        acaSpec.template.scale.rules = rules;
+        acaEditor.setValue(JSON.stringify(acaSpec, null, 2));
+      } catch (e) {
+        console.error(e);
+        acaEditor.setValue("// invalid yaml");
+      }
+    }); 
+  </script>
+</body>
+
+</html>
