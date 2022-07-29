@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>KEDA to Azure Container Apps scale rules converter</title>
+  <link rel="icon" href="favicon.svg">
   <link rel="stylesheet" data-name="vs/editor/editor.main"
     href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/editor/editor.main.min.css">
 </head>
@@ -39,10 +40,9 @@
       readOnly: true
     }, baseOptions));
 
-    kedaEditor.onDidChangeModelContent(() => {
-      
+    kedaEditor.onDidChangeModelContent(function kedaYamlChanged() {
       const kedaYaml = kedaEditor.getValue();
-      
+
       try {
         const json = jsyaml.loadAll(kedaYaml);
 
@@ -53,32 +53,28 @@
           }
         };
 
-        let scaledObject, scaledObjectTriggers;        
-        if (Array.isArray(json)) {
-          scaledObject = json.find(obj => obj.kind === 'ScaledObject');
-          if (!scaledObject) {
-            acaEditor.setValue('// No ScaledObject found');
-            return;
-          }
+        let scaledObjectTriggers;
+        let scaledObject = json.find(obj => obj.kind === 'ScaledObject');
+
+        if (scaledObject) {
           scaledObjectTriggers = scaledObject.spec.triggers;
-        } else {
-          if (json.kind === 'ScaledObject' && json.spec && Array.isArray(json.triggers)) {
-            scaledObjectTriggers = json.spec.triggers;
-          } else if (Array.isArray(json.triggers)) {
-            scaledObjectTriggers = json;
+        } else if (!scaledObject && json.length === 1) {
+          const isTriggersSection = Array.isArray(json[0].triggers)
+          if (isTriggersSection) {
+            scaledObjectTriggers = json[0].triggers;
+            scaledObject = {
+              metadata: {
+                name: 'scale-rule-1'
+              },
+              spec: {
+                triggers: scaledObjectTriggers
+              }
+            };
           }
-          scaledObject = {
-            metadata: {
-              name: 'scale-rule-1'
-            },
-            spec: {
-              triggers: scaledObjectTriggers
-            }
-          };
         }
 
-        if (!scaledObjectTriggers) {
-          acaEditor.setValue('// no KEDA triggers found');
+        if (!scaledObject || !scaledObjectTriggers) {
+          acaEditor.setValue('// No valid ScaledObject found.')
           return;
         }
 
@@ -103,7 +99,7 @@
 
           if (trigger.authentication) {
             const secretTargetRef = trigger.authentication.spec.secretTargetRef;
-            
+
             if (secretTargetRef && secretTargetRef.length) {
               scaleRule.custom.auth = secretTargetRef.map(ref => {
                 return {
@@ -118,12 +114,62 @@
         }
 
         acaSpec.template.scale.rules = rules;
-        acaEditor.setValue(JSON.stringify(acaSpec, null, 2));
+        const acaJson = JSON.stringify(acaSpec, null, 2);
+        acaEditor.setValue(acaJson);
+
       } catch (e) {
         console.error(e);
         acaEditor.setValue("// invalid yaml");
       }
-    }); 
+    });
+
+    const sampleYaml = `apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-datadog-secret
+  namespace: my-project
+spec:
+  secretTargetRef:
+    # Required: API key for your Datadog account
+  - parameter: apiKey
+    name: datadog-secrets
+    key: apiKey
+    # Required: APP key for your Datadog account
+  - parameter: appKey
+    name: datadog-secrets
+    key: appKey
+    # Optional: Datadog site. Default: "datadoghq.com"
+  - parameter: datadogSite
+    name: datadog-secrets
+    key: datadogSite
+
+---
+
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: datadog-scaledobject
+  namespace: my-project
+spec:
+  scaleTargetRef:
+    name: worker
+  triggers:
+  - type: datadog
+    # Optional: (Value or AverageValue). Whether the target value is global or average per pod. Default: AverageValue
+    metricType: "Value"
+    metadata:
+      # Required: datadog metric query
+      query: "sum:trace.redis.command.hits{env:none,service:redis}.as_count()"
+      # Required: according to the number of query result, to scale the TargetRef
+      queryValue: "7"
+      # Optional: The time window (in seconds) to retrieve metrics from Datadog. Default: 90
+      age: "120"
+      # Optional: The metric value to return to the HPA if a metric value wasn't found for the specified time window
+      metricUnavailableValue: "0"
+    authenticationRef:
+      name: keda-trigger-auth-datadog-secret
+    `;
+    kedaEditor.setValue(sampleYaml);
   </script>
 </body>
 
