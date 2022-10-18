@@ -184,7 +184,7 @@ spec:
     // kedaEditor.setValue(sampleYaml);
 
     async function loadExamples() {
-      const examples = await fetch('/examples.json').then(res => res.json());
+      const examples = await fetch('./examples.json').then(res => res.json());
       const select = document.getElementById('examples');
       for (const example of examples) {
         const option = document.createElement('option');
