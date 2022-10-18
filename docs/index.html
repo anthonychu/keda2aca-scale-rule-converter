@@ -8,12 +8,24 @@
   <link rel="icon" href="favicon.svg">
   <link rel="stylesheet" data-name="vs/editor/editor.main"
     href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.33.0/min/vs/editor/editor.main.min.css">
+  <style>
+    #examples {
+      font: 14px/1.5 Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      margin: 12px;
+    }
+  </style>
 </head>
 
 <body>
-
-  <div id="kedaEditor" style="height: 100%; width: 48%; display: inline-block"></div>
-  <div id="acaEditor" style="height: 100%; width: 48%; display: inline-block"></div>
+  <div>
+    <select id="examples">
+      <option>-- Select a KEDA example --</option>
+    </select>
+  </div>
+  <div>
+    <div id="kedaEditor" style="height: 90%; width: 48%; display: inline-block"></div>
+    <div id="acaEditor" style="height: 90%; width: 48%; display: inline-block"></div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"
     integrity="sha256-Rdw90D3AegZwWiwpibjH9wkBPwS9U4bjJ51ORH8H69c=" crossorigin="anonymous"></script>
@@ -169,7 +181,27 @@ spec:
     authenticationRef:
       name: keda-trigger-auth-datadog-secret
     `;
-    kedaEditor.setValue(sampleYaml);
+    // kedaEditor.setValue(sampleYaml);
+
+    async function loadExamples() {
+      const examples = await fetch('/examples.json').then(res => res.json());
+      const select = document.getElementById('examples');
+      for (const example of examples) {
+        const option = document.createElement('option');
+        option.value = example.title;
+        option.innerText = example.title;
+        option.props = example;
+        select.appendChild(option);
+      }
+
+      select.addEventListener('change', function (e) {
+        const option = select.options[select.selectedIndex];
+        if (option.props) {
+          kedaEditor.setValue(option.props.example);
+        }
+      });
+    }
+    loadExamples();
   </script>
 </body>
 

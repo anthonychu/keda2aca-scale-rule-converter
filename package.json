@@ -1,0 +1,27 @@
+{
+  "name": "keda2aca-scale-rule-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate-examples": "node tools/generate-examples.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anthonychu/keda2aca-scale-rule-converter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/anthonychu/keda2aca-scale-rule-converter/issues"
+  },
+  "homepage": "https://github.com/anthonychu/keda2aca-scale-rule-converter#readme",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
