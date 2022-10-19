@@ -61,10 +61,13 @@
     };
 
     const kedaEditor = monaco.editor.create(document.getElementById('kedaEditor'), baseOptions);
-    const acaEditor = monaco.editor.create(document.getElementById('acaEditor'), Object.assign({
-      language: 'yaml',
-      readOnly: true
-    }, baseOptions));
+    const acaEditor = monaco.editor.create(document.getElementById('acaEditor'), Object.assign(
+      baseOptions,
+      {
+        language: 'json',
+        readOnly: true
+      }
+    ));
 
     kedaEditor.onDidChangeModelContent(function kedaYamlChanged() {
       const kedaYaml = kedaEditor.getValue();
