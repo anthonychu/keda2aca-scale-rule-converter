@@ -13,6 +13,15 @@
       font: 14px/1.5 Consolas, "Liberation Mono", Menlo, Courier, monospace;
       margin: 12px;
     }
+
+    #docs-span {
+      font: 14px Helvetica, Arial, sans-serif;
+      margin: 12px;
+    }
+
+    .hidden-link {
+      display: none;
+    }
   </style>
 </head>
 
@@ -21,6 +30,11 @@
     <select id="examples">
       <option>-- Select a KEDA example --</option>
     </select>
+    &nbsp;
+    <span id="docs-span" class="hidden-link">
+      <a id="docs-link" href="" target="_blank">Scaler reference</a> | 
+      <a href="https://learn.microsoft.com/azure/container-apps/scale-app" target="_blank">Scaling in Azure Container Apps</a>
+    </span>
   </div>
   <div>
     <div id="kedaEditor" style="height: 90%; width: 48%; display: inline-block"></div>
@@ -135,54 +149,6 @@
       }
     });
 
-    const sampleYaml = `apiVersion: keda.sh/v1alpha1
-kind: TriggerAuthentication
-metadata:
-  name: keda-trigger-auth-datadog-secret
-  namespace: my-project
-spec:
-  secretTargetRef:
-    # Required: API key for your Datadog account
-  - parameter: apiKey
-    name: datadog-secrets
-    key: apiKey
-    # Required: APP key for your Datadog account
-  - parameter: appKey
-    name: datadog-secrets
-    key: appKey
-    # Optional: Datadog site. Default: "datadoghq.com"
-  - parameter: datadogSite
-    name: datadog-secrets
-    key: datadogSite
-
----
-
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: datadog-scaledobject
-  namespace: my-project
-spec:
-  scaleTargetRef:
-    name: worker
-  triggers:
-  - type: datadog
-    # Optional: (Value or AverageValue). Whether the target value is global or average per pod. Default: AverageValue
-    metricType: "Value"
-    metadata:
-      # Required: datadog metric query
-      query: "sum:trace.redis.command.hits{env:none,service:redis}.as_count()"
-      # Required: according to the number of query result, to scale the TargetRef
-      queryValue: "7"
-      # Optional: The time window (in seconds) to retrieve metrics from Datadog. Default: 90
-      age: "120"
-      # Optional: The metric value to return to the HPA if a metric value wasn't found for the specified time window
-      metricUnavailableValue: "0"
-    authenticationRef:
-      name: keda-trigger-auth-datadog-secret
-    `;
-    // kedaEditor.setValue(sampleYaml);
-
     async function loadExamples() {
       const examples = await fetch('./examples.json').then(res => res.json());
       const select = document.getElementById('examples');
@@ -196,8 +162,14 @@ spec:
 
       select.addEventListener('change', function (e) {
         const option = select.options[select.selectedIndex];
+        const docsSpan = document.getElementById('docs-span');
         if (option.props) {
           kedaEditor.setValue(option.props.example);
+          const docsLink = document.getElementById('docs-link');
+          docsLink.href = option.props.kedaDocsUrl;
+          docsSpan.classList.remove('hidden-link');
+        } else {
+          docsSpan.classList.add('hidden-link');
         }
       });
     }
