@@ -152,6 +152,11 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/azure-event-hub",
     "title": "Azure Event Hubs (2)",
+    "example": "apiVersion: keda.sh/v1alpha1\nkind: TriggerAuthentication\nmetadata:\n  name: nameOfTriggerAuth\n  namespace: default\nspec:\n  podIdentity:\n    provider: Azure | azure-workload\n"
+  },
+  {
+    "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/azure-event-hub",
+    "title": "Azure Event Hubs (3)",
     "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: azure-eventhub-scaledobject\n  namespace: default\nspec:\n  scaleTargetRef:\n    name: azureeventhub-function\n  triggers:\n  - type: azure-eventhub\n    metadata:\n      # Required\n      storageConnectionFromEnv: AzureWebJobsStorage\n      # Required if not using Pod Identity\n      connectionFromEnv: EventHub\n      # Required if using Pod Identity\n      eventHubNamespace: AzureEventHubNameSpace\n      eventHubName: NameOfTheEventHub\n# Optional\n      consumerGroup: $Default # default: $Default\n      unprocessedEventThreshold: '64' # default 64 events.\n      blobContainer: ehcontainer\n"
   },
   {
@@ -202,7 +207,7 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/azure-service-bus",
     "title": "Azure Service Bus (1)",
-    "example": "triggers:\n- type: azure-servicebus\n  metadata:\n    # Required: queueName OR topicName and subscriptionName\n    queueName: functions-sbqueue\n    # or\n    topicName: functions-sbtopic\n    subscriptionName: sbtopic-sub1\n    # Optional, required when pod identity is used\n    namespace: service-bus-namespace\n    # Optional, can use TriggerAuthentication as well\n    connectionFromEnv: SERVICEBUS_CONNECTIONSTRING_ENV_NAME # This must be a connection string for a queue itself, and not a namespace level (e.g. RootAccessPolicy) connection string [#215](https://github.com/kedacore/keda/issues/215)\n    # Optional\n    messageCount: \"5\" # Optional. Count of messages to trigger scaling on. Default: 5 messages\n    activationMessageCount: \"2\"\n    cloud: Private # Optional. Default: AzurePublicCloud\n    endpointSuffix: servicebus.airgap.example # Required when cloud=Private\n"
+    "example": "triggers:\n- type: azure-servicebus\n  metadata:\n    # Required: queueName OR topicName and subscriptionName\n    queueName: functions-sbqueue\n    # or\n    topicName: functions-sbtopic\n    subscriptionName: sbtopic-sub1\n    # Optional, required when pod identity is used\n    namespace: service-bus-namespace\n    # Optional, can use TriggerAuthentication as well\n    connectionFromEnv: SERVICEBUS_CONNECTIONSTRING_ENV_NAME\n    # Optional\n    messageCount: \"5\" # Optional. Count of messages to trigger scaling on. Default: 5 messages\n    activationMessageCount: \"2\"\n    cloud: Private # Optional. Default: AzurePublicCloud\n    endpointSuffix: servicebus.airgap.example # Required when cloud=Private\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/azure-service-bus",
@@ -252,7 +257,7 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/cpu",
     "title": "CPU (3)",
-    "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: cpu-scaledobject\n  namespace: default\nspec:\n  scaleTargetRef:\n    name: my-deployment\n  triggers:\n  - type: cpu\n    metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'\n    metadata:\n      value: \"50\"\n    containerName: \"api\"\n"
+    "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: cpu-scaledobject\n  namespace: default\nspec:\n  scaleTargetRef:\n    name: my-deployment\n  triggers:\n  - type: cpu\n    metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'\n    metadata:\n      value: \"50\"\n      containerName: \"api\"\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/cron",
@@ -277,7 +282,7 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/elasticsearch",
     "title": "Elasticsearch (1)",
-    "example": "triggers:\n  - type: elasticsearch\n    metadata:\n      addresses: \"http://localhost:9200\"\n      username: \"elastic\"\n      passwordFromEnv: \"ELASTIC_PASSWORD\"\n      index: \"my-index\"\n      searchTemplateName: \"my-search-template-name\"\n      params: \"param1:value1;param2:value2\"\n      valueLocation: \"hits.total.value\"\n      targetValue: \"1.1\"\n      activationTargetValue: \"5.5\"\n"
+    "example": "triggers:\n  - type: elasticsearch\n    metadata:\n      addresses: \"http://localhost:9200\"\n      username: \"elastic\"\n      passwordFromEnv: \"ELASTIC_PASSWORD\"\n      index: \"my-index\"\n      searchTemplateName: \"my-search-template-name\"\n      parameters: \"param1:value1;param2:value2\"\n      valueLocation: \"hits.total.value\"\n      targetValue: \"1.1\"\n      activationTargetValue: \"5.5\"\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/elasticsearch",
@@ -332,7 +337,7 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/gcp-stackdriver",
     "title": "Google Cloud Platform Stackdriver (1)",
-    "example": "triggers:\n- type: gcp-stackdriver\n  metadata:\n    projectId: my-project-id\n    filter: 'metric.type=\"storage.googleapis.com/network/received_bytes_count\" AND resource.type=\"gcs_bucket\" AND metric.label.method=\"WriteObject\" AND resource.label.bucket_name=\"my-gcp-bucket\"'\n    targetValue: '100'\n    activationTargetValue: \"10\" # Optional - Default is 0\n    credentialsFromEnv: GOOGLE_APPLICATION_CREDENTIALS_JSON\n"
+    "example": "triggers:\n- type: gcp-stackdriver\n  metadata:\n    projectId: my-project-id\n    filter: 'metric.type=\"storage.googleapis.com/network/received_bytes_count\" AND resource.type=\"gcs_bucket\" AND metric.label.method=\"WriteObject\" AND resource.label.bucket_name=\"my-gcp-bucket\"'\n    targetValue: '100'\n    activationTargetValue: \"10\" # Optional - Default is 0\n    credentialsFromEnv: GOOGLE_APPLICATION_CREDENTIALS_JSON\n    alignmentPeriodSeconds: '60'\n    alignmentAligner: mean\n    alignmentReducer: none\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/gcp-stackdriver",
@@ -422,7 +427,7 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/kubernetes-workload",
     "title": "Kubernetes Workload (2)",
-    "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: workload-scaledobject\nspec:\n  scaleTargetRef:\n    name: workload-deployment\n  triggers:\n  - type: kubernetes-workload\n    metadata:\n      podSelector: 'app=backend, deploy notin (critical, monolith)'\n      value: '3'`\n"
+    "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: workload-scaledobject\nspec:\n  scaleTargetRef:\n    name: workload-deployment\n  triggers:\n  - type: kubernetes-workload\n    metadata:\n      podSelector: 'app=backend, deploy notin (critical, monolith)'\n      value: '3'\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/liiklus-topic",
@@ -447,7 +452,7 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/memory",
     "title": "Memory (3)",
-    "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: memory-scaledobject\n  namespace: default\nspec:\n  scaleTargetRef:\n    name: my-deployment\n  triggers:\n  - type: memory\n    metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'\n    metadata:\n      value: \"50\"\n    containerName: \"api\"\n"
+    "example": "apiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: memory-scaledobject\n  namespace: default\nspec:\n  scaleTargetRef:\n    name: my-deployment\n  triggers:\n  - type: memory\n    metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'\n    metadata:\n      value: \"50\"\n      containerName: \"api\"\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/metrics-api",
@@ -542,12 +547,12 @@
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/new-relic",
     "title": "New Relic (1)",
-    "example": "triggers:\n  - type: new-relic\n    metadata:\n      # Required: Account - Subaccount to run the query on\n      account: 1234567\n      # Required: QueryKey - Api key to connect to New Relic\n      queryKey: \"NRAK-xxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n      # Optional: nrRegion - Region to query data for. Default value is US.\n      region: \"US\"\n      # Optional: noDataError - If the query returns no data should this be treated as an error. Default value is false.\n      noDataError: \"true\"\n      # Required: nrql\n      nrql: \"SELECT average(duration) from Transaction where appName='SITE' TIMESERIES\"\n      # Required: threshold\n      threshold: \"50.50\"\n      # Optional: activationThreshold - Target value for activating the scaler.\n      activationThreshold: \"20.1\"\n"
+    "example": "triggers:\n  - type: new-relic\n    metadata:\n      # Required: Account - Subaccount to run the query on\n      account: '1234567'\n      # Required: QueryKey - Api key to connect to New Relic\n      queryKey: \"NRAK-xxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n      # Optional: nrRegion - Region to query data for. Default value is US.\n      region: \"US\"\n      # Optional: noDataError - If the query returns no data should this be treated as an error. Default value is false.\n      noDataError: \"true\"\n      # Required: nrql\n      nrql: \"SELECT average(duration) from Transaction where appName='SITE' TIMESERIES\"\n      # Required: threshold\n      threshold: \"50.50\"\n      # Optional: activationThreshold - Target value for activating the scaler.\n      activationThreshold: \"20.1\"\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/new-relic",
     "title": "New Relic (2)",
-    "example": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: new-relic-secret\n  namespace: my-project\ntype: Opaque\ndata:\n  apiKey: TlJBSy0xMjM0NTY3ODkwMTIzNDU2Nwo= # base64 encoding of the new relic api key NRAK-12345678901234567\n  account: MTIzNDU2 # base64 encoding of the new relic account number 123456\n  region: VVM= # base64 encoding of the new relic region US\n---\napiVersion: keda.sh/v1alpha1\nkind: TriggerAuthentication\nmetadata:\n  name: keda-trigger-auth-new-relic\n  namespace: my-project\nspec:\n  secretTargetRef:\n  - parameter: queryKey\n    name: new-relic-secret\n    key: apiKey\n  - parameter: account\n    name: new-relic-secret\n    key: account\n  - parameter: region\n    name: new-relic-secret\n    key: region\n\n---\napiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: newrelic-scaledobject\n  namespace: keda\nspec:\n  maxReplicaCount: 12\n  scaleTargetRef:\n    name: dummy\n  triggers:\n    - type: new-relic\n      metadata:\n        nrql: \"SELECT average(duration) from Transaction where appName='SITE' TIMESERIES\"\n        noDataError: \"true\"\n        threshold: 1000\n        authenticationRef:\n          name: keda-trigger-auth-new-relic\n"
+    "example": "apiVersion: v1\nkind: Secret\nmetadata:\n  name: new-relic-secret\n  namespace: my-project\ntype: Opaque\ndata:\n  apiKey: TlJBSy0xMjM0NTY3ODkwMTIzNDU2Nwo= # base64 encoding of the new relic api key NRAK-12345678901234567\n  account: MTIzNDU2 # base64 encoding of the new relic account number 123456\n  region: VVM= # base64 encoding of the new relic region US\n---\napiVersion: keda.sh/v1alpha1\nkind: TriggerAuthentication\nmetadata:\n  name: keda-trigger-auth-new-relic\n  namespace: my-project\nspec:\n  secretTargetRef:\n  - parameter: queryKey\n    name: new-relic-secret\n    key: apiKey\n  - parameter: account\n    name: new-relic-secret\n    key: account\n  - parameter: region\n    name: new-relic-secret\n    key: region\n\n---\napiVersion: keda.sh/v1alpha1\nkind: ScaledObject\nmetadata:\n  name: newrelic-scaledobject\n  namespace: keda\nspec:\n  maxReplicaCount: 12\n  scaleTargetRef:\n    name: dummy\n  triggers:\n    - type: new-relic\n      metadata:\n        nrql: \"SELECT average(duration) from Transaction where appName='SITE' TIMESERIES\"\n        noDataError: \"true\"\n        threshold: '1000'\n      authenticationRef:\n        name: keda-trigger-auth-new-relic\n"
   },
   {
     "kedaDocsUrl": "https://keda.sh/docs/2.8/scalers/openstack-metric",
