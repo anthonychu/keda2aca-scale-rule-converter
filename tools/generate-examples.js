@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const fs = require('fs').promises;
 
-const githubFolderUrl = 'https://api.github.com/repos/kedacore/keda-docs/contents/content/docs/2.8/scalers';
+const githubFolderUrl = 'https://api.github.com/repos/kedacore/keda-docs/contents/content/docs/2.10/scalers';
 
 async function main() {
 
